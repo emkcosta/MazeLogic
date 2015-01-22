@@ -158,20 +158,21 @@ for( int i = 0; i < sizeof(DR_pins) / 2; i++) {
            
            //Fix this nonsense using XCode:
            if( digitalRead(DRh_MOV, HIGH) | digitalRead(DR1_MOV, HIGH) | digitalRead(DR2_MOV, HIGH)
-                   | digitalRead(DR3_MOV, HIGH) | digitalRead(DR4_MOV, HIGH) | digitalRead(DR5_MOV, HIGH)
-                   | digitalRead(DR6_MOV, HIGH) | digitalRead(DR7_MOV, HIGH)
-                   && digitalRead(IR_DRh, HIGH) | digitalRead(IR_DR1, HIGH) | digitalRead(IR_DR2, HIGH)
-                   | digitalRead(IR_DR3, HIGH) | digitalRead(IR_DR4, HIGH) | digitalRead(IR_DR5, HIGH)
-                   | digitalRead(IR_DR6, HIGH) | digitalRead(IR_DR7, HIGH)) {
-                 Serial.println("WARNING: Rat is near a moving door."); 
-                   digitalWrite(DRh_STOP, HIGH);
-                   digitalWrite(DR1_STOP, HIGH);
-                   digitalWrite(DR2_STOP, HIGH);
-                   digitalWrite(DR3_STOP, HIGH);
-                   digitalWrite(DR4_STOP, HIGH);
-                   digitalWrite(DR5_STOP, HIGH);
-                   digitalWrite(DR6_STOP, HIGH);
-                   digitalWrite(DR7_STOP, HIGH);
+           | digitalRead(DR3_MOV, HIGH) | digitalRead(DR4_MOV, HIGH) | digitalRead(DR5_MOV, HIGH)
+           | digitalRead(DR6_MOV, HIGH) | digitalRead(DR7_MOV, HIGH)
+           && digitalRead(IR_DRh, HIGH) | digitalRead(IR_DR1, HIGH) | digitalRead(IR_DR2, HIGH)
+           | digitalRead(IR_DR3, HIGH) | digitalRead(IR_DR4, HIGH) | digitalRead(IR_DR5, HIGH)
+           | digitalRead(IR_DR6, HIGH) | digitalRead(IR_DR7, HIGH)) {
+           
+           Serial.println("WARNING: Rat is near a moving door."); 
+           digitalWrite(DRh_STOP, HIGH);
+           digitalWrite(DR1_STOP, HIGH);
+           digitalWrite(DR2_STOP, HIGH);
+           digitalWrite(DR3_STOP, HIGH);
+           digitalWrite(DR4_STOP, HIGH);
+           digitalWrite(DR5_STOP, HIGH);
+           digitalWrite(DR6_STOP, HIGH);
+           digitalWrite(DR7_STOP, HIGH);
            }
     }
            

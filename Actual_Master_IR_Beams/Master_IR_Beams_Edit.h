@@ -1,3 +1,16 @@
+//
+//  Master_IR_Beams_Edit.h
+//  AStyle
+//
+//  Created by Emma Costa on 1/22/15.
+//
+//
+
+#ifndef __AStyle__Master_IR_Beams_Edit__
+#define __AStyle__Master_IR_Beams_Edit__
+
+#include <stdio.h>
+
 int PINS;
 
 //Digital pins
@@ -318,3 +331,6 @@ for( int i = 0; i < sizeof(DR_pins) / 2; i++) {
      
           
 }
+
+
+#endif /* defined(__AStyle__Master_IR_Beams_Edit__) */
