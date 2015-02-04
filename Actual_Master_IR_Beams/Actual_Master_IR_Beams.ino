@@ -1,14 +1,4 @@
-//
-//  Master_IR_Beams_Edit.h
-//  AStyle
-//
-//  Created by Emma Costa on 1/22/15.
-//
-//
-
 #include <stdio.h>
-
-int PINS;
 
 //Digital pins
 //Use physical pin numbers?
@@ -18,15 +8,15 @@ int PINS;
 
 enum PINS
 {
-    IR_home = 0,//Distal IR photosensors on arms
-    IR_arm1,
-    IR_arm2,
+    IR_home = 20,//Distal IR photosensors on arms
+    IR_arm1 = 21,
+    IR_arm2 = 14,
     IR_arm3,
     IR_arm4,
     IR_arm5,
     IR_arm6,
     IR_arm7,
-    IR_DRh,//Safety IR photosensors
+    IR_DRh = 2,//Safety IR photosensors
     IR_DR1,
     IR_DR2,
     IR_DR3,
@@ -34,32 +24,32 @@ enum PINS
     IR_DR5,
     IR_DR6,
     IR_DR7,
-    DRh,//Door OPEN/CLOSE control pins
-    DR1,
-    DR2,
-    DR3,
-    DR4,
-    DR5,
-    DR6,
-    DR7,
-    DRh_MOV,//Door MOTION pins
-    DR1_MOV,
-    DR2_MOV,
-    DR3_MOV,
-    DR4_MOV,
-    DR5_MOV,
-    DR6_MOV,
-    DR7_MOV,
+    DRh = 22,//Door OPEN/CLOSE control pins
+    DR1 = 25,
+    DR2 = 28,
+    DR3 = 31,
+    DR4 = 34,
+    DR5 = 37,
+    DR6 = 40,
+    DR7 = 43,
+    DRh_MOV = 23,//Door MOTION pins
+    DR1_MOV = 26,
+    DR2_MOV = 29,
+    DR3_MOV = 32,
+    DR4_MOV = 35,
+    DR5_MOV = 38,
+    DR6_MOV = 41,
+    DR7_MOV = 44,
 
     //Specify STOP HIGH = EMERGENCY STOP
-    DRh_STOP,//Safety door STOP motion...JON WILL HAVE TO ADD
-    DR1_STOP,
-    DR2_STOP,
-    DR3_STOP,
-    DR4_STOP,
-    DR5_STOP,
-    DR6_STOP,
-    DR7_STOP,
+    DRh_STOP = 24,//Safety door STOP motion...JON WILL HAVE TO ADD
+    DR1_STOP = 27,
+    DR2_STOP = 30,
+    DR3_STOP = 33,
+    DR4_STOP = 36,
+    DR5_STOP = 39,
+    DR6_STOP = 42,
+    DR7_STOP = 45,
 
 };
 
@@ -158,12 +148,12 @@ void loop()
         //DOOR IS MOVING/NOT MOVING IF/ELSE STATEMENT
 
         //Fix this nonsense using XCode:
-        if( digitalRead(DRh_MOV, HIGH) || digitalRead(DR1_MOV, HIGH) || digitalRead(DR2_MOV, HIGH)
-                || digitalRead(DR3_MOV, HIGH) || digitalRead(DR4_MOV, HIGH) || digitalRead(DR5_MOV, HIGH)
-                || digitalRead(DR6_MOV, HIGH) || digitalRead(DR7_MOV, HIGH)
-                && digitalRead(IR_DRh, HIGH) || digitalRead(IR_DR1, HIGH) || digitalRead(IR_DR2, HIGH)
-                || digitalRead(IR_DR3, HIGH) || digitalRead(IR_DR4, HIGH) || digitalRead(IR_DR5, HIGH)
-                || digitalRead(IR_DR6, HIGH) || digitalRead(IR_DR7, HIGH))
+        if( digitalRead(DRh_MOV) || digitalRead(DR1_MOV) || digitalRead(DR2_MOV)
+                || digitalRead(DR3_MOV) || digitalRead(DR4_MOV) || digitalRead(DR5_MOV)
+                || digitalRead(DR6_MOV) || digitalRead(DR7_MOV)
+                && digitalRead(IR_DRh) || digitalRead(IR_DR1) || digitalRead(IR_DR2)
+                || digitalRead(IR_DR3) || digitalRead(IR_DR4) || digitalRead(IR_DR5)
+                || digitalRead(IR_DR6) || digitalRead(IR_DR7))
         {
             Serial.println("WARNING: Rat is near a moving door.");
             digitalWrite(DRh_STOP, HIGH);
@@ -183,8 +173,8 @@ void loop()
     }    
     
     //CHECK IF RAT IS ON ARM 1
-    bool stateIR_arm1 = digitalRead(IR_arm1, HIGH);
-    if(IR_arm1)
+    bool stateIR_arm1 = digitalRead(IR_arm1);
+    if(stateIR_arm1)
     {
         Serial.println("Rat is on distal end of arm 1.");
         digitalWrite(DRh, LOW);
@@ -202,8 +192,8 @@ void loop()
     }
 
     //CHECK IF RAT IS ON ARM 2
-    bool stateIR_arm2 = digitalRead(IR_arm2, HIGH);
-    if(IR_arm2)
+    bool stateIR_arm2 = digitalRead(IR_arm2);
+    if(stateIR_arm2)
     {
         Serial.println("Rat is on distal end of arm 2.");
         digitalWrite(DRh, LOW);
@@ -221,8 +211,8 @@ void loop()
     }
 
     //CHECK IF RAT IS ON ARM 3
-    bool stateIR_arm3 = digitalRead(IR_arm3, HIGH);
-    if(IR_arm3)
+    bool stateIR_arm3 = digitalRead(IR_arm3);
+    if(stateIR_arm3)
     {
         Serial.println("Rat is on distal end of arm 3.");
         digitalWrite(DRh, LOW);
@@ -240,8 +230,8 @@ void loop()
     }
 
     //CHECK IF RAT IS ON ARM 4
-    bool stateIR_arm4 = digitalRead(IR_arm4, HIGH);
-    if(IR_arm4)
+    bool stateIR_arm4 = digitalRead(IR_arm4);
+    if(stateIR_arm4)
     {
         Serial.println("Rat is on distal end of arm 4.");
         digitalWrite(DRh, LOW);
@@ -259,8 +249,8 @@ void loop()
     }
 
     //CHECK IF RAT IS ON ARM 5
-    bool stateIR_arm5 = digitalRead(IR_arm5, HIGH);
-    if(IR_arm5)
+    bool stateIR_arm5 = digitalRead(IR_arm5);
+    if(stateIR_arm5)
     {
         Serial.println("Rat is on distal end of arm 5.");
         digitalWrite(DRh, LOW);
@@ -278,8 +268,8 @@ void loop()
     }
 
     //CHECK IF RAT IS ON ARM 6
-    bool stateIR_arm6 = digitalRead(IR_arm6, HIGH);
-    if(IR_arm6)
+    bool stateIR_arm6 = digitalRead(IR_arm6);
+    if(stateIR_arm6)
     {
         Serial.println("Rat is on distal end of arm 6.");
         digitalWrite(DRh, LOW);
@@ -297,8 +287,8 @@ void loop()
     }
 
     //CHECK IF RAT IS ON ARM 7
-    bool stateIR_arm7 = digitalRead(IR_arm7, HIGH);
-    if(IR_arm7)
+    bool stateIR_arm7 = digitalRead(IR_arm7);
+    if(stateIR_arm7)
     {
         Serial.println("Rat is on distal end of arm 7.");
         digitalWrite(DRh, LOW);
@@ -321,10 +311,10 @@ void loop()
     //left the HOME arm
     //But... how would I discriminate btwn the Rat just having left the HOME arm and
     //the rat returning to it to finish a trial?
-    if( digitalRead(IR_home, LOW) && digitalRead(IR_arm1, LOW)
-            && digitalRead(IR_arm2, LOW) && digitalRead(IR_arm3, LOW)
-            && digitalRead(IR_arm4, LOW) && digitalRead(IR_arm5, LOW)
-            && digitalRead(IR_arm6, LOW) && digitalRead(IR_arm7, LOW) )
+    if( !digitalRead(IR_home) && !digitalRead(IR_arm1)
+            && !digitalRead(IR_arm2) && !digitalRead(IR_arm3)
+            && !digitalRead(IR_arm4) && !digitalRead(IR_arm5)
+            && !digitalRead(IR_arm6) && !digitalRead(IR_arm7) )
     {
 
         Serial.println("The rat is not on the distal end of any arm and may be in center of maze.");
