@@ -6,124 +6,222 @@
 //FOR DOORS...HIGH=CLOSED, LOW=OPEN
 //Using ARDUNIO DUE
 
-enum PINS
-{
-    IR_home = 20,//Distal IR photosensors on arms
-    IR_arm1 = 21,
-    IR_arm2 = 14,
-    IR_arm3,
-    IR_arm4,
-    IR_arm5,
-    IR_arm6,
-    IR_arm7,
-    IR_DRh = 2,//Safety IR photosensors
-    IR_DR1,
-    IR_DR2,
-    IR_DR3,
-    IR_DR4,
-    IR_DR5,
-    IR_DR6,
-    IR_DR7,
-    DRh = 22,//Door OPEN/CLOSE control pins
-    DR1 = 25,
-    DR2 = 28,
-    DR3 = 31,
-    DR4 = 34,
-    DR5 = 37,
-    DR6 = 40,
-    DR7 = 43,
-    DRh_MOV = 23,//Door MOTION pins
-    DR1_MOV = 26,
-    DR2_MOV = 29,
-    DR3_MOV = 32,
-    DR4_MOV = 35,
-    DR5_MOV = 38,
-    DR6_MOV = 41,
-    DR7_MOV = 44,
+#define NUM_ARMS 8
 
-    //Specify STOP HIGH = EMERGENCY STOP
-    DRh_STOP = 24,//Safety door STOP motion...JON WILL HAVE TO ADD
-    DR1_STOP = 27,
-    DR2_STOP = 30,
-    DR3_STOP = 33,
-    DR4_STOP = 36,
-    DR5_STOP = 39,
-    DR6_STOP = 42,
-    DR7_STOP = 45,
 
+/******************************************************************************/
+/* Enumerate the sorts of pins we have, both input and output                 */
+
+enum PIN_TYPE
+{ 
+  DISTAL_SENSORS = 20,   // Start the enum at an int 
+  SAFETY_SENSORS,        // we wouldn't reach by accident
+  OPEN_CLOSE_CONTROL, 
+  MOTION, 
+  SAFETY_STOP 
 };
+
+
+/******************************************************************************/
+/* Enumerate the arm numbers                                                  */
+/* They are assumed to each apply for every PIN_TYPE,                         */
+/* (So there is a home distal-sensor, and an arm_4 open_close_control, etc.   */
+
+enum ARM_IND
+{
+  ARM_HOME = 50,      // Start the enum at an int
+  ARM_1,              // at an int we wouldn't reach by accident
+  ARM_2,              // and non-overlapping with PIN_TYPE
+  ARM_3,
+  ARM_4,
+  ARM_5,
+  ARM_6,
+  ARM_7
+};
+
+
+/****************************************************************************/
+/* Map the pin types and arms to specific hardware pins                     */
+/* We never explicitly index into the array, instead we use                 */
+/* the 'pin()' function                                                     */
+/*                                                                          */
+//                        h   1   2   3   4   5   6   7    // Arm number
+//                       --  --  --  --  --  --  --  --                 
+int pins[][NUM_ARMS] = {{20, 21, 14, 15, 16, 17, 18, 19},  // DISTAL_SENSORS
+                        { 2,  3,  4,  5,  6,  7,  8,  9},  // SAFETY_SENSORS
+                        {22, 25, 28, 31, 34, 37, 40, 43},  // OPEN_CLOSE_CONTROL
+                        {23, 26, 29, 32, 35, 38, 41, 44},  // MOTION
+                        {24, 27, 30, 33, 36, 39, 42, 45}}; // SAFETY_STOP
+
+
+
+/******************************************************************************/
+/* Use this function to look up the pin # of a given pin type and arm index   */
+/* For example, to get the hardware pin of the home arm distal sensor, call:  */
+/* pin( DISTAL_SENSOR, ARM_HOME )   -> 20                                     */
+
+int pin( int t, int a){
+  return pins[t - DISTAL_SENSORS][a - ARM_HOME];
+}
+
+
+
+/******************************************************************************/
+/* Input sanitization for PIN_TYPE ints                                       */
+bool pinOk( int t ){
+  return (t >= DISTAL_SENSORS && t <= SAFETY_STOP);
+}
+
+
+/******************************************************************************/
+/* Input satitization for ARM_IND ints                                        */
+bool armOk( int a ){
+  return (a >= ARM_HOME && a <= ARM_7);
+}
+
+
+/******************************************************************************/
+/* Use setRow() to set all arms of a given PIN_TYPE to HIGH or LOW            */
+
+void setRow(int pin_t, uint8_t b){
+
+  // Make sure inputs are valid
+  if( pinOk(pin_t) ){
+    for (int i = ARM_HOME; i < NUM_ARMS + ARM_HOME; i++){
+      digitalWrite ( pin(pin_t,i), b );
+    }
+  }
+  else {
+      Serial.println("WARNING: setRow: bad input");
+  }
+}
+
+
+/******************************************************************************/
+/* The same as setRow, but takes a single arm index to exclude                */
+/* from the action. (e.g. useful for lowering all doors except the home door) */
+
+void setRowExcludingPin( int pin_t, int arm_n, uint8_t b){
+
+  // Make sure inputs are valid
+  if ( pinOk(pin_t) && armOk(arm_n) ) {
+
+      for (int i = ARM_HOME; i < NUM_ARMS + ARM_HOME; i++){
+	if (i != arm_n) {
+	  digitalWrite( pin(pin_t,arm_n), b );
+	}
+      }
+
+  } 
+  else {
+      Serial.println("WARNING: setRowExcludingPin: bad input");
+  }      
+
+}
+
+
+/******************************************************************************/
+/* set the mode of all pins of PIN_TYPE to INPUT or OUTPUT                    */
+
+void rowMode( int pin_t, uint8_t m ){
+
+  // Make sure inputs are valid
+  if ( pinOk(pin_t) && (m == INPUT || m == OUTPUT) ){
+    for (int i = ARM_HOME; i < NUM_ARMS + ARM_HOME; i++){
+      pinMode( pin(pin_t, i), m);
+    }
+  }
+  else {
+      Serial.println("WARNING: rowMode: bad input");
+  }
+
+}
+
+
+/******************************************************************************/
+/* For a given PIN_TYPE, which pin is currently HIGH?                         */
+/* For example, which arm is moving?  whichArmInRow( MOVING );                */
+
+int whichArmInRow( int pin_t ){
+
+  int r = -1; // Sentinal value
+
+  if (pinOk(pin_t)){
+    for (int i = ARM_HOME; i < ARM_HOME + NUM_ARMS; i++){
+      if (digitalRead( pin(pin_t,i) ) == HIGH){
+	if (r > -1) {
+	  Serial.println("WARNING: whichArmInRow found multiple HIGH values");
+	}
+	r = i;
+      }
+    }
+  }
+  else {
+      Serial.println("WARNING: anyInRow: bad input");
+  }
+
+  return r;
+
+}
+
+
+/******************************************************************************/
+/* Test whether rat is near a door marked Moving                              */
+
+bool ratNearMovingDoor(){
+
+  bool v = false;
+  for (int i = ARM_HOME; i < ARM_HOME + NUM_ARMS; i++){
+    bool ratHere    = digitalRead( pin(DISTAL_SENSORS, i) );
+    bool motionHere = digitalRead( pin(MOTION, i) );
+    v = v || (ratHere && motionHere);
+  }
+  return v;
+
+}
+
+
+/******************************************************************************/
+/* Action to take in when rat is in a distal arm                              */
+
+void ratDistalArmProtocol(){
+
+  int i = whichArmInRow( DISTAL_SENSORS );
+
+  // Close all the doors besides current-arm
+  setRowExcludingPin( OPEN_CLOSE_CONTROL, i, HIGH );
+
+  // Open home and current-arm
+  digitalWrite( pin( OPEN_CLOSE_CONTROL, ARM_HOME ), LOW);
+  digitalWrite( pin( OPEN_CLOSE_CONTROL, i )       , LOW);
+
+}
+
 
 void setup()
 {
     Serial.begin(9600);
 
     //INPUTS FROM ALL OF THE IR SENSORS (ARMS AND DOORS)
-    pinMode(IR_home, INPUT);
-    pinMode(IR_arm1, INPUT);
-    pinMode(IR_arm2, INPUT);
-    pinMode(IR_arm3, INPUT);
-    pinMode(IR_arm4, INPUT);
-    pinMode(IR_arm5, INPUT);
-    pinMode(IR_arm6, INPUT);
-    pinMode(IR_arm7, INPUT);
-    pinMode(IR_DRh, INPUT);
-    pinMode(IR_DR1, INPUT);
-    pinMode(IR_DR2, INPUT);
-    pinMode(IR_DR3, INPUT);
-    pinMode(IR_DR4, INPUT);
-    pinMode(IR_DR5, INPUT);
-    pinMode(IR_DR6, INPUT);
-    pinMode(IR_DR7, INPUT);
+    rowMode( DISTAL_SENSORS, INPUT );
+    rowMode( SAFETY_SENSORS, INPUT );
+
 
     //INPUTS AND OUTPUTS FROM ALL OF THE DOORS
-    pinMode(DRh, OUTPUT);
-    pinMode(DR1, OUTPUT);
-    pinMode(DR2, OUTPUT);
-    pinMode(DR3, OUTPUT);
-    pinMode(DR4, OUTPUT);
-    pinMode(DR5, OUTPUT);
-    pinMode(DR6, OUTPUT);
-    pinMode(DR7, OUTPUT);
-    pinMode(DRh_STOP, OUTPUT);
-    pinMode(DR1_STOP, OUTPUT);
-    pinMode(DR2_STOP, OUTPUT);
-    pinMode(DR3_STOP, OUTPUT);
-    pinMode(DR4_STOP, OUTPUT);
-    pinMode(DR5_STOP, OUTPUT);
-    pinMode(DR6_STOP, OUTPUT);
-    pinMode(DR7_STOP, OUTPUT);
-    pinMode(DRh_MOV, INPUT);
-    pinMode(DR1_MOV, INPUT);
-    pinMode(DR2_MOV, INPUT);
-    pinMode(DR3_MOV, INPUT);
-    pinMode(DR4_MOV, INPUT);
-    pinMode(DR5_MOV, INPUT);
-    pinMode(DR6_MOV, INPUT);
-    pinMode(DR7_MOV, INPUT);
+    rowMode( OPEN_CLOSE_CONTROL, OUTPUT );
+    rowMode( SAFETY_STOP,        OUTPUT );
+
+    //INPUTS FROM MOTION SENSORS (TODO: Is this right?)
+    rowMode( MOTION, INPUT );
 
     //Default states
     //I think we should have all the doors start OPEN, but the HOME door will start CLOSED
     //because that is where the Rat will be starting
-    digitalWrite(DRh_STOP, LOW);
-    digitalWrite(DR1_STOP, LOW);
-    digitalWrite(DR2_STOP, LOW);
-    digitalWrite(DR3_STOP, LOW);
-    digitalWrite(DR4_STOP, LOW);
-    digitalWrite(DR5_STOP, LOW);
-    digitalWrite(DR6_STOP, LOW);
-    digitalWrite(DR7_STOP, LOW);
-    digitalWrite(DRh, HIGH);
-    digitalWrite(DR1, LOW);
-    digitalWrite(DR2, LOW);
-    digitalWrite(DR3, LOW);
-    digitalWrite(DR4, LOW);
-    digitalWrite(DR5, LOW);
-    digitalWrite(DR6, LOW);
-    digitalWrite(DR7, LOW);
-
+    setRow( SAFETY_STOP, LOW );
+    digitalWrite( pin( OPEN_CLOSE_CONTROL, ARM_HOME ), HIGH );
+    setRowExcludingPin( OPEN_CLOSE_CONTROL, ARM_HOME,  LOW );
 
 }
-
 
 void loop()
 {
@@ -131,39 +229,17 @@ void loop()
     //WHERE IS THE RAT LOCATED?
 
     //CHECK IF RAT IS ON HOME ARM
-    bool stateIR_home = digitalRead(IR_home);
-    if(stateIR_home)
+    if( digitalRead( pin( DISTAL_SENSORS, ARM_HOME ) ) == HIGH )
     {
         Serial.println("Rat is on distal end of home arm.");
-        //This is faster than a "for" loop
-        digitalWrite(DRh, LOW);
-        digitalWrite(DR1, LOW);
-        digitalWrite(DR2, LOW);
-        digitalWrite(DR3, LOW);
-        digitalWrite(DR4, LOW);
-        digitalWrite(DR5, LOW);
-        digitalWrite(DR6, LOW);
-        digitalWrite(DR7, LOW);
+        //Lower all the doors
+	setRow( OPEN_CLOSE_CONTROL, LOW );
 
         //DOOR IS MOVING/NOT MOVING IF/ELSE STATEMENT
-
-        //Fix this nonsense using XCode:
-        if( digitalRead(DRh_MOV) || digitalRead(DR1_MOV) || digitalRead(DR2_MOV)
-                || digitalRead(DR3_MOV) || digitalRead(DR4_MOV) || digitalRead(DR5_MOV)
-                || digitalRead(DR6_MOV) || digitalRead(DR7_MOV)
-                && digitalRead(IR_DRh) || digitalRead(IR_DR1) || digitalRead(IR_DR2)
-                || digitalRead(IR_DR3) || digitalRead(IR_DR4) || digitalRead(IR_DR5)
-                || digitalRead(IR_DR6) || digitalRead(IR_DR7))
+        if( ratNearMovingDoor() )
         {
             Serial.println("WARNING: Rat is near a moving door.");
-            digitalWrite(DRh_STOP, HIGH);
-            digitalWrite(DR1_STOP, HIGH);
-            digitalWrite(DR2_STOP, HIGH);
-            digitalWrite(DR3_STOP, HIGH);
-            digitalWrite(DR4_STOP, HIGH);
-            digitalWrite(DR5_STOP, HIGH);
-            digitalWrite(DR6_STOP, HIGH);
-            digitalWrite(DR7_STOP, HIGH);
+	    setRow( SAFETY_STOP, HIGH );
         }
     }
 
@@ -172,138 +248,8 @@ void loop()
         Serial.println("Rat is NOT on distal end of home arm.");
     }    
     
-    //CHECK IF RAT IS ON ARM 1
-    bool stateIR_arm1 = digitalRead(IR_arm1);
-    if(stateIR_arm1)
-    {
-        Serial.println("Rat is on distal end of arm 1.");
-        digitalWrite(DRh, LOW);
-        digitalWrite(DR1, LOW);
-        digitalWrite(DR2, HIGH);
-        digitalWrite(DR3, HIGH);
-        digitalWrite(DR4, HIGH);
-        digitalWrite(DR5, HIGH);
-        digitalWrite(DR6, HIGH);
-        digitalWrite(DR7, HIGH);
-    }
-    else
-    {
-        Serial.println("Rat is NOT on distal end of arm 1.");
-    }
-
-    //CHECK IF RAT IS ON ARM 2
-    bool stateIR_arm2 = digitalRead(IR_arm2);
-    if(stateIR_arm2)
-    {
-        Serial.println("Rat is on distal end of arm 2.");
-        digitalWrite(DRh, LOW);
-        digitalWrite(DR1, HIGH);
-        digitalWrite(DR2, LOW);
-        digitalWrite(DR3, HIGH);
-        digitalWrite(DR4, HIGH);
-        digitalWrite(DR5, HIGH);
-        digitalWrite(DR6, HIGH);
-        digitalWrite(DR7, HIGH);
-    }
-    else
-    {
-        Serial.println("Rat is NOT on distal end of arm 2.");
-    }
-
-    //CHECK IF RAT IS ON ARM 3
-    bool stateIR_arm3 = digitalRead(IR_arm3);
-    if(stateIR_arm3)
-    {
-        Serial.println("Rat is on distal end of arm 3.");
-        digitalWrite(DRh, LOW);
-        digitalWrite(DR1, HIGH);
-        digitalWrite(DR2, HIGH);
-        digitalWrite(DR3, LOW);
-        digitalWrite(DR4, HIGH);
-        digitalWrite(DR5, HIGH);
-        digitalWrite(DR6, HIGH);
-        digitalWrite(DR7, HIGH);
-    }
-    else
-    {
-        Serial.println("Rat is NOT on distal end of arm 3.");
-    }
-
-    //CHECK IF RAT IS ON ARM 4
-    bool stateIR_arm4 = digitalRead(IR_arm4);
-    if(stateIR_arm4)
-    {
-        Serial.println("Rat is on distal end of arm 4.");
-        digitalWrite(DRh, LOW);
-        digitalWrite(DR1, HIGH);
-        digitalWrite(DR2, HIGH);
-        digitalWrite(DR3, HIGH);
-        digitalWrite(DR4, LOW);
-        digitalWrite(DR5, HIGH);
-        digitalWrite(DR6, HIGH);
-        digitalWrite(DR7, HIGH);
-    }
-    else
-    {
-        Serial.println("Rat is NOT on distal end of arm 4.");
-    }
-
-    //CHECK IF RAT IS ON ARM 5
-    bool stateIR_arm5 = digitalRead(IR_arm5);
-    if(stateIR_arm5)
-    {
-        Serial.println("Rat is on distal end of arm 5.");
-        digitalWrite(DRh, LOW);
-        digitalWrite(DR1, HIGH);
-        digitalWrite(DR2, HIGH);
-        digitalWrite(DR3, HIGH);
-        digitalWrite(DR4, HIGH);
-        digitalWrite(DR5, LOW);
-        digitalWrite(DR6, HIGH);
-        digitalWrite(DR7, HIGH);
-    }
-    else
-    {
-        Serial.println("Rat is NOT on distal end of arm 5.");
-    }
-
-    //CHECK IF RAT IS ON ARM 6
-    bool stateIR_arm6 = digitalRead(IR_arm6);
-    if(stateIR_arm6)
-    {
-        Serial.println("Rat is on distal end of arm 6.");
-        digitalWrite(DRh, LOW);
-        digitalWrite(DR1, HIGH);
-        digitalWrite(DR2, HIGH);
-        digitalWrite(DR3, HIGH);
-        digitalWrite(DR4, HIGH);
-        digitalWrite(DR5, HIGH);
-        digitalWrite(DR6, LOW);
-        digitalWrite(DR7, HIGH);
-    }
-    else
-    {
-        Serial.println("Rat is NOT on distal end of arm 6.");
-    }
-
-    //CHECK IF RAT IS ON ARM 7
-    bool stateIR_arm7 = digitalRead(IR_arm7);
-    if(stateIR_arm7)
-    {
-        Serial.println("Rat is on distal end of arm 7.");
-        digitalWrite(DRh, LOW);
-        digitalWrite(DR1, HIGH);
-        digitalWrite(DR2, HIGH);
-        digitalWrite(DR3, HIGH);
-        digitalWrite(DR4, HIGH);
-        digitalWrite(DR5, HIGH);
-        digitalWrite(DR6, HIGH);
-        digitalWrite(DR7, LOW);
-    }
-    else
-    {
-        Serial.println("Rat is NOT on distal end of arm 7.");
-    }
+    //CHECK IF RAT IS ON EACH ARM, KEEP THAT ARM AND HOME ARM OPEN
+    ratDistalArmProtocol();
 
     //CHECK IF RAT IS ON CENTER PLATFORM
     //Is this necessary?
@@ -311,10 +257,7 @@ void loop()
     //left the HOME arm
     //But... how would I discriminate btwn the Rat just having left the HOME arm and
     //the rat returning to it to finish a trial?
-    if( !digitalRead(IR_home) && !digitalRead(IR_arm1)
-            && !digitalRead(IR_arm2) && !digitalRead(IR_arm3)
-            && !digitalRead(IR_arm4) && !digitalRead(IR_arm5)
-            && !digitalRead(IR_arm6) && !digitalRead(IR_arm7) )
+    if( whichArmInRow(DISTAL_SENSORS) < 0 )
     {
 
         Serial.println("The rat is not on the distal end of any arm and may be in center of maze.");
